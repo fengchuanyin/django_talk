@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}数据分析 - 电商评论洞察系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3 mb-4">数据分析</h1>
+    </div>
+</div>
+
+<!-- 简化统计卡片 -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card dashboard-card text-center">
+            <div class="card-body">
+                <div class="card-icon text-primary">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <div class="stat-number">{{ total_reviews }}</div>
+                <div class="stat-label">总评论数</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 简化图表 -->
+<div class="row">
+    <div class="col-lg-6">
+        <div class="chart-container">
+            <h5 class="chart-title">
+                <i class="fas fa-chart-pie me-2"></i>整体情感分布
+            </h5>
+            <canvas id="simpleSentimentChart" data-chart="sentiment"
+                    data-chart-data='{"values": [168, 32, 50]}'>
+            </canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 简化初始化
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Analytics page loaded');
+    ReviewInsights.initializeCharts();
+});
+</script>
+{% endblock %}

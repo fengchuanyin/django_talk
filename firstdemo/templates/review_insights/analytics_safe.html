@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}数据分析 - 电商评论洞察系统{% endblock %}
+
+{% block content %}
+<!-- 简化版分析页面 -->
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">数据分析</h1>
+        </div>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <div class="card-icon text-primary">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="stat-number">{{ total_reviews }}</div>
+                    <div class="stat-label">总评论数</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <div class="card-icon text-success">
+                        <i class="fas fa-thumbs-up"></i>
+                    </div>
+                    <div class="stat-number">168</div>
+                    <div class="stat-label">正面评论</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图表区域 -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="chart-container">
+                <h5 class="chart-title">
+                    <i class="fas fa-chart-pie me-2"></i>整体情感分布
+                </h5>
+                <canvas id="sentimentChart" data-chart="sentiment" 
+                        data-chart-data='{"values": [168, 32, 50]}'
+                        style="max-height: 300px;">
+                </canvas>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="chart-container">
+                <h5 class="chart-title">
+                    <i class="fas fa-chart-bar me-2"></i>产品评分对比
+                </h5>
+                <canvas id="ratingChart" data-chart="rating"
+                        data-chart-data='{"values": [4.2, 3.8, 4.5, 3.9, 4.1]}'
+                        style="max-height: 250px;">
+                </canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 安全的图表初始化
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Analytics page - DOM loaded');
+    
+    // 延迟初始化确保DOM完全加载
+    setTimeout(function() {
+        try {
+            if (typeof ReviewInsights !== 'undefined' && ReviewInsights.initializeCharts) {
+                ReviewInsights.initializeCharts();
+                console.log('Charts initialized successfully');
+            } else {
+                console.warn('ReviewInsights not available');
+            }
+        } catch (error) {
+            console.error('Chart initialization error:', error);
+        }
+    }, 100);
+});
+</script>
+{% endblock %}

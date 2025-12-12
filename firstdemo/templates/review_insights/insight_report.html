@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}商品洞察报告 - {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <a href="{% url 'review_insights:reviews' %}" class="btn btn-outline-secondary">&lt; 返回</a>
+    <div class="fw-bold">商品洞察</div>
+    <button id="shareBtn" class="btn btn-primary">分享</button>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body d-flex">
+      <div class="me-3">
+        <img src="https://via.placeholder.com/120x120" alt="product" class="rounded" width="120" height="120" />
+      </div>
+      <div class="flex-grow-1">
+        <div class="h5 mb-1">{{ product.name }}</div>
+        <div class="text-muted mb-2">综合评分: {{ score10 }} / 10</div>
+        <div class="mb-2">
+          <span class="text-warning">{% for i in "12345"|slice:":"%}{% if forloop.counter <= stars %}★{% else %}☆{% endif %}{% endfor %}</span>
+        </div>
+        <div class="small text-secondary">基于 {{ review_count }} 条真实评论分析</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-3" style="background: #f7fbe1; border-color: #c8d900;">
+    <div class="card-body">
+      <div class="fw-bold mb-2">🤖 AI 购买建议</div>
+      <div>{{ advice }}</div>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="fw-bold mb-2">情感分布</div>
+      <canvas id="sentimentChart" height="280" style="width:100%;max-height:280px;display:block"></canvas>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="fw-bold mb-2">✅ 值得买 (Pros)</div>
+          <ul class="mb-0">
+            {% for p in pros %}<li>{{ p }}</li>{% empty %}<li>暂无</li>{% endfor %}
+          </ul>
+        </div>
+        <div class="col-md-6">
+          <div class="fw-bold mb-2">⚠️ 劝退点 (Cons)</div>
+          <ul class="mb-0">
+            {% for c in cons %}<li>{{ c }}</li>{% empty %}<li>暂无</li>{% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="fw-bold mb-2">大家都在说</div>
+      <div>
+        {% for k in keywords %}
+          {% with w=k.weight|default:1 %}
+            <span class="badge me-2 mb-2" style="font-size: {{ w|add:12 }}px; background:#f3f4f6; color:#080604;">{{ k.text }}</span>
+          {% endwith %}
+        {% empty %}
+          <span class="text-muted">暂无关键词</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <ul class="nav nav-tabs" id="reviewsTab" role="tablist">
+        <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab精选" type="button" role="tab">精选</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab正面" type="button" role="tab">正面</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab负面" type="button" role="tab">负面</button></li>
+      </ul>
+      <div class="tab-content pt-3">
+        <div class="tab-pane fade show active" id="tab精选" role="tabpanel">
+          {% for r in reviews精选 %}
+            <div class="border-bottom pb-2 mb-2">
+              <div class="small text-muted">{{ r.author }} · {{ r.date }}</div>
+              <div>{{ r.content }}</div>
+            </div>
+          {% empty %}
+            <div class="text-muted">暂无精选评论</div>
+          {% endfor %}
+        </div>
+        <div class="tab-pane fade" id="tab正面" role="tabpanel">
+          {% for r in reviews正面 %}
+            <div class="border-bottom pb-2 mb-2">
+              <div class="small text-muted">{{ r.author }} · {{ r.date }}</div>
+              <div>{{ r.content }}</div>
+            </div>
+          {% empty %}
+            <div class="text-muted">暂无正面评论</div>
+          {% endfor %}
+        </div>
+        <div class="tab-pane fade" id="tab负面" role="tabpanel">
+          {% for r in reviews负面 %}
+            <div class="border-bottom pb-2 mb-2">
+              <div class="small text-muted">{{ r.author }} · {{ r.date }}</div>
+              <div>{{ r.content }}</div>
+            </div>
+          {% empty %}
+            <div class="text-muted">暂无负面评论</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="loadingOverlay" class="position-fixed top-0 start-0 w-100 h-100 d-none" style="background: rgba(255,255,255,0.9); z-index: 1050;">
+    <div class="d-flex flex-column align-items-center justify-content-center h-100">
+      <div class="spinner-border text-success mb-3" role="status"></div>
+      <div id="loadingText" class="text-muted">正在连接京东...</div>
+    </div>
+  </div>
+
+  {% if hours_ago is not None and hours_ago > 0 %}
+  <div class="toast align-items-center text-bg-light border-0 show position-fixed top-0 start-50 translate-middle-x mt-3" role="alert" aria-live="assertive" aria-atomic="true" style="z-index:1060;">
+    <div class="d-flex">
+      <div class="toast-body">⚡️ 已为您加载历史报告 (生成于 {{ hours_ago }} 小时前)</div>
+      <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const ctx = document.getElementById('sentimentChart');
+  if (ctx) {
+    const c = ctx.getContext('2d');
+    const gGreen = c.createLinearGradient(0, 0, 0, ctx.height);
+    gGreen.addColorStop(0, '#22c55e');
+    gGreen.addColorStop(1, '#16a34a');
+    const gGray = c.createLinearGradient(0, 0, 0, ctx.height);
+    gGray.addColorStop(0, '#6b7280');
+    gGray.addColorStop(1, '#374151');
+    const gRed = c.createLinearGradient(0, 0, 0, ctx.height);
+    gRed.addColorStop(0, '#ef4444');
+    gRed.addColorStop(1, '#dc2626');
+
+    const values = [{{ sentiment_pct.positive }}, {{ sentiment_pct.neutral }}, {{ sentiment_pct.negative }}];
+    const labels = ['推荐', '中立', '劝退'];
+    const maxIdx = values.indexOf(Math.max(...values));
+    const centerLabel = labels[maxIdx];
+    const centerValue = values[maxIdx];
+
+    const centerText = {
+      id: 'centerText',
+      afterDraw(chart) {
+        const { ctx } = chart;
+        const x = chart.getDatasetMeta(0).data[0].x;
+        const y = chart.getDatasetMeta(0).data[0].y;
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#080604';
+        ctx.font = '600 18px Noto Sans SC';
+        ctx.fillText(centerLabel, x, y - 10);
+        ctx.font = '700 22px Noto Sans SC';
+        ctx.fillText(centerValue + '%', x, y + 16);
+        ctx.restore();
+      }
+    };
+
+    new Chart(c, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          backgroundColor: [gGreen, gGray, gRed],
+          borderColor: '#ffffff',
+          borderWidth: 3,
+          spacing: 4,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1,
+        cutout: '65%',
+        animation: { animateRotate: true, animateScale: true, duration: 700, easing: 'easeOutQuart' },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { usePointStyle: true, pointStyle: 'circle', padding: 16 }
+          },
+          tooltip: {
+            backgroundColor: '#080604',
+            titleColor: '#ffffff',
+            bodyColor: '#ffffff',
+            cornerRadius: 8,
+            callbacks: {
+              label: function(ctx) {
+                const val = ctx.parsed;
+                const count = Math.round((val / 100) * {{ review_count|default:0 }});
+                return ctx.label + ': ' + val + '% (' + count + '条)';
+              }
+            }
+          }
+        }
+      },
+      plugins: [centerText]
+    });
+  }
+  const shareBtn = document.getElementById('shareBtn');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', function() {
+      const url = window.location.href;
+      if (navigator.share) {
+        navigator.share({ title: document.title, url });
+      } else {
+        navigator.clipboard.writeText(url);
+        alert('链接已复制');
+      }
+    });
+  }
+  const steps = ['正在连接京东...','发现商品...','正在阅读前 50 条评论...','AI 正在思考...'];
+  let i = 0;
+  const overlay = document.getElementById('loadingOverlay');
+  const text = document.getElementById('loadingText');
+  function startLoading() {
+    overlay.classList.remove('d-none');
+    i = 0;
+    text.textContent = steps[i];
+    const timer = setInterval(() => {
+      i++;
+      if (i >= steps.length) { clearInterval(timer); overlay.classList.add('d-none'); return; }
+      text.textContent = steps[i];
+    }, 800);
+  }
+  // 可按需调用 startLoading();
+});
+</script>
+{% endblock %}

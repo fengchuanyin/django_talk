@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}仪表板 - 电商评论洞察系统{% endblock %}
+
+{% block content %}
+<!-- KV视觉区域 - 参考HTML文件风格 -->
+<section class="kv-section mb-5">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="kv-content">
+                    <h1 class="kv-title">
+                        <span class="kv-title-main">评论洞察</span>
+                        <span class="kv-title-sub">数据驱动决策</span>
+                    </h1>
+                    <p class="kv-description">
+                        通过AI驱动的情感分析和数据可视化，深入了解客户反馈，
+                        <br>优化产品策略，提升用户满意度。
+                    </p>
+                    <div class="kv-actions">
+                        <a href="#stats" class="btn btn-hero btn-lg me-3 u-hover">
+                            <i class="fas fa-chart-line me-2"></i>查看数据
+                        </a>
+                        <a href="#reviews" class="btn btn-hero-outline btn-lg u-hover">
+                            <i class="fas fa-comments me-2"></i>管理评论
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="kv-visual">
+                    <div class="kv-card">
+                        <div class="kv-card-icon">
+                            <i class="fas fa-analytics"></i>
+                        </div>
+                        <div class="kv-card-content">
+                            <h4>实时分析</h4>
+                            <p>250+ 条评论数据</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 分节背景区域 -->
+<section class="section-bg section-stats" id="stats">
+    <div class="container-fluid">
+        <div class="section-header text-center mb-5">
+            <h2 class="section-title">数据概览</h2>
+            <p class="section-subtitle">实时统计与关键指标</p>
+        </div>
+
+<!-- 统计卡片 -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card dashboard-card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            总产品数
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_products }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-box fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card dashboard-card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            总评论数
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_reviews }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-comments fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card dashboard-card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            平均评分
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ avg_rating }}/5</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-star fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card dashboard-card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            情感分析
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ sentiment_stats|length }} 种情感
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-heart fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    </div>
+</section>
+
+<!-- 图表区域 -->
+<section class="section-bg section-charts">
+    <div class="container-fluid">
+        <div class="section-header text-center mb-5">
+            <h2 class="section-title">数据可视化</h2>
+            <p class="section-subtitle">直观的图表分析</p>
+        </div>
+        <div class="row">
+            <!-- 情感分布图表 -->
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h5 class="chart-title">
+                        <i class="fas fa-chart-pie me-2"></i>情感分布
+                    </h5>
+                    <canvas id="sentimentChart" data-chart="sentiment" 
+                            data-chart-data='{"values": [{% for stat in sentiment_stats %}{{ stat.count }}{% if not forloop.last %}, {% endif %}{% endfor %}]}'>
+                    </canvas>
+                </div>
+            </div>
+
+            <!-- 评分分布图表 -->
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h5 class="chart-title">
+                        <i class="fas fa-chart-bar me-2"></i>评分分布
+                    </h5>
+                    <canvas id="ratingChart" data-chart="rating"
+                            data-chart-data='{"values": [{% for stat in rating_stats %}{{ stat.count }}{% if not forloop.last %}, {% endif %}{% endfor %}]}'>
+                    </canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 最近评论 -->
+<section class="section-bg section-reviews" id="reviews">
+    <div class="container-fluid">
+        <div class="section-header text-center mb-5">
+            <h2 class="section-title">最新评论</h2>
+            <p class="section-subtitle">实时用户反馈</p>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-container">
+                    <h5 class="chart-title">
+                        <i class="fas fa-clock me-2"></i>最近评论
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>产品</th>
+                                    <th>评论者</th>
+                                    <th>评分</th>
+                                    <th>情感</th>
+                                    <th>评论内容</th>
+                                    <th>时间</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for review in recent_reviews %}
+                                <tr>
+                                    <td><strong>{{ review.product.name }}</strong></td>
+                                    <td>{{ review.author }}</td>
+                                    <td>
+                                        <span class="text-warning">
+                                            {% for i in "12345"|make_list %}
+                                                {% if forloop.counter <= review.rating %}
+                                                    <i class="fas fa-star"></i>
+                                                {% else %}
+                                                    <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if review.sentiment == 'positive' %}bg-success
+                                            {% elif review.sentiment == 'negative' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {% if review.sentiment == 'positive' %}正面
+                                            {% elif review.sentiment == 'negative' %}负面
+                                            {% else %}中性{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>{{ review.content|truncatechars:100 }}</td>
+                                    <td>{{ review.created_at|date:"Y-m-d H:i" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 评论趋势图表 -->
+<section class="section-bg section-trends">
+    <div class="container-fluid">
+        <div class="section-header text-center mb-5">
+            <h2 class="section-title">趋势分析</h2>
+            <p class="section-subtitle">评论数量变化趋势</p>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-container">
+                    <h5 class="chart-title">
+                        <i class="fas fa-chart-line me-2"></i>评论趋势
+                    </h5>
+                    <canvas id="trendChart" data-chart="trend"
+                            data-chart-data='{
+                                "labels": [{% for trend in trend_data %}"{{ trend.date|date:"m/d" }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+                                "values": [{% for trend in trend_data %}{{ trend.review_count }}{% if not forloop.last %}, {% endif %}{% endfor %}]
+                            }'>
+                    </canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 仪表板特定功能
+document.addEventListener('DOMContentLoaded', function() {
+    // 定期刷新数据（每30秒）
+    setInterval(function() {
+        refreshDashboardData();
+    }, 30000);
+});
+
+function refreshDashboardData() {
+    fetch('/api/dashboard/stats/')
+        .then(response => response.json())
+        .then(data => {
+            // 更新统计卡片
+            updateStatCards(data);
+            
+            // 重新初始化图表
+            ReviewInsights.initializeCharts();
+        })
+        .catch(error => {
+            console.error('刷新数据失败:', error);
+        });
+}
+
+function updateStatCards(data) {
+    // 这里可以添加更新统计卡片的逻辑
+    console.log('更新统计数据:', data);
+}
+</script>
+{% endblock %}

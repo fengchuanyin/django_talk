@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}系统演示 - 电商评论洞察系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3 mb-4 text-gray-800">电商评论洞察系统演示</h1>
+        
+        <div class="alert alert-success" role="alert">
+            <h4 class="alert-heading">🎉 系统部署成功！</h4>
+            <p>电商评论洞察系统已经成功部署并运行。以下是系统的功能概览：</p>
+        </div>
+    </div>
+</div>
+
+<!-- 功能导航 -->
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card dashboard-card h-100">
+            <div class="card-body text-center">
+                <div class="card-icon text-primary mb-3">
+                    <i class="fas fa-tachometer-alt fa-3x"></i>
+                </div>
+                <h5 class="card-title">数据仪表板</h5>
+                <p class="card-text">查看评论数据的整体概览，包括统计图表和趋势分析。</p>
+                <a href="{% url 'review_insights:dashboard' %}" class="btn btn-primary">进入仪表板</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card dashboard-card h-100">
+            <div class="card-body text-center">
+                <div class="card-icon text-success mb-3">
+                    <i class="fas fa-comments fa-3x"></i>
+                </div>
+                <h5 class="card-title">评论管理</h5>
+                <p class="card-text">管理和筛选评论数据，支持多维度搜索和情感分析。</p>
+                <a href="{% url 'review_insights:reviews' %}" class="btn btn-success">管理评论</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card dashboard-card h-100">
+            <div class="card-body text-center">
+                <div class="card-icon text-info mb-3">
+                    <i class="fas fa-chart-bar fa-3x"></i>
+                </div>
+                <h5 class="card-title">数据分析</h5>
+                <p class="card-text">深入分析评论数据，生成详细的洞察报告和可视化图表。</p>
+                <a href="{% url 'review_insights:analytics' %}" class="btn btn-info">数据分析</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 系统特性 -->
+<div class="row">
+    <div class="col-12">
+        <div class="chart-container">
+            <h5 class="chart-title">
+                <i class="fas fa-star me-2"></i>系统特性
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>核心功能</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check-circle text-success me-2"></i>评论数据可视化</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>情感分析展示</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>评分分布统计</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>趋势分析图表</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>技术特色</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check-circle text-info me-2"></i>响应式设计</li>
+                        <li><i class="fas fa-check-circle text-info me-2"></i>交互式图表</li>
+                        <li><i class="fas fa-check-circle text-info me-2"></i>实时数据更新</li>
+                        <li><i class="fas fa-check-circle text-info me-2"></i>多维度筛选</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API测试 -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="chart-container">
+            <h5 class="chart-title">
+                <i class="fas fa-plug me-2"></i>API接口测试
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>可用API端点</h6>
+                    <div class="list-group">
+                        <a href="/reviews/api/dashboard/stats/" class="list-group-item list-group-item-action" target="_blank">
+                            <i class="fas fa-chart-line me-2"></i>仪表板统计数据
+                        </a>
+                        <a href="/reviews/api/reviews/" class="list-group-item list-group-item-action" target="_blank">
+                            <i class="fas fa-list me-2"></i>评论列表API
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6>系统状态</h6>
+                    <div class="alert alert-success">
+                        <i class="fas fa-server me-2"></i>服务器运行正常
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-database me-2"></i>数据库连接正常
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 快速操作 -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="text-center">
+            <h5 class="mb-4">快速操作</h5>
+            <div class="btn-group" role="group">
+                <a href="{% url 'review_insights:dashboard' %}" class="btn btn-hero-outline me-2 u-hover">
+                    <i class="fas fa-tachometer-alt me-1"></i>查看仪表板
+                </a>
+                <a href="{% url 'review_insights:reviews' %}" class="btn btn-hero-outline me-2 u-hover">
+                    <i class="fas fa-comments me-1"></i>管理评论
+                </a>
+                <a href="{% url 'review_insights:analytics' %}" class="btn btn-hero-outline me-2 u-hover">
+                    <i class="fas fa-chart-bar me-1"></i>数据分析
+                </a>
+                <a href="/admin/" class="btn btn-hero-outline u-hover" target="_blank">
+                    <i class="fas fa-cog me-1"></i>管理后台
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 添加一些交互效果
+    const cards = document.querySelectorAll('.dashboard-card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+            this.style.transition = 'transform 0.3s ease';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // 测试API连接
+    fetch('/reviews/api/dashboard/stats/')
+        .then(response => response.json())
+        .then(data => {
+            console.log('API连接成功:', data);
+        })
+        .catch(error => {
+            console.error('API连接失败:', error);
+        });
+});
+</script>
+{% endblock %}

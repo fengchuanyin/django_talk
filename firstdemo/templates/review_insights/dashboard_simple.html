@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}仪表板 - 电商评论洞察系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3 mb-4 text-gray-800">仪表板</h1>
+    </div>
+</div>
+
+<!-- 统计卡片 -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card dashboard-card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            总产品数
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_products }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-box fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card dashboard-card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            总评论数
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_reviews }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-comments fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card dashboard-card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            平均评分
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ avg_rating }}/5</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-star fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card dashboard-card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            情感分析
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ sentiment_stats|length }} 种情感
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-heart fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 图表区域 -->
+<div class="row">
+    <!-- 情感分布图表 -->
+    <div class="col-lg-6">
+        <div class="chart-container">
+            <h5 class="chart-title">
+                <i class="fas fa-chart-pie me-2"></i>情感分布
+            </h5>
+            <canvas id="sentimentChart"></canvas>
+        </div>
+    </div>
+
+    <!-- 评分分布图表 -->
+    <div class="col-lg-6">
+        <div class="chart-container">
+            <h5 class="chart-title">
+                <i class="fas fa-chart-bar me-2"></i>评分分布
+            </h5>
+            <canvas id="ratingChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- 最近评论 -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="chart-container">
+            <h5 class="chart-title">
+                <i class="fas fa-clock me-2"></i>最近评论
+            </h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>产品</th>
+                            <th>评论者</th>
+                            <th>评分</th>
+                            <th>情感</th>
+                            <th>评论内容</th>
+                            <th>时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for review in recent_reviews %}
+                        <tr>
+                            <td><strong>{{ review.product.name }}</strong></td>
+                            <td>{{ review.author }}</td>
+                            <td>
+                                <span class="text-warning">
+                                    {% for i in "12345"|make_list %}
+                                        {% if forloop.counter <= review.rating %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if review.sentiment == 'positive' %}bg-success
+                                    {% elif review.sentiment == 'negative' %}bg-danger
+                                    {% else %}bg-secondary{% endif %}">
+                                    {% if review.sentiment == 'positive' %}正面
+                                    {% elif review.sentiment == 'negative' %}负面
+                                    {% else %}中性{% endif %}
+                                </span>
+                            </td>
+                            <td>{{ review.content|truncatechars:100 }}</td>
+                            <td>{{ review.created_at|date:"Y-m-d H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 评论趋势图表 -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="chart-container">
+            <h5 class="chart-title">
+                <i class="fas fa-chart-line me-2"></i>评论趋势
+            </h5>
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 仪表板特定功能
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化图表
+    initializeCharts();
+    
+    // 定期刷新数据（每30秒）
+    setInterval(function() {
+        refreshDashboardData();
+    }, 30000);
+});
+
+function initializeCharts() {
+    // 情感分布图表
+    const sentimentCtx = document.getElementById('sentimentChart');
+    if (sentimentCtx) {
+        new Chart(sentimentCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['正面', '负面', '中性'],
+                datasets: [{
+                    data: [
+                        {% for stat in sentiment_stats %}
+                            {% if stat.sentiment == 'positive' %}{{ stat.count }}{% endif %}
+                        {% endfor %},
+                        {% for stat in sentiment_stats %}
+                            {% if stat.sentiment == 'negative' %}{{ stat.count }}{% endif %}
+                        {% endfor %},
+                        {% for stat in sentiment_stats %}
+                            {% if stat.sentiment == 'neutral' %}{{ stat.count }}{% endif %}
+                        {% endfor %}
+                    ],
+                    backgroundColor: ['#28a745', '#dc3545', '#17a2b8'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+    
+    // 评分分布图表
+    const ratingCtx = document.getElementById('ratingChart');
+    if (ratingCtx) {
+        new Chart(ratingCtx, {
+            type: 'bar',
+            data: {
+                labels: ['1星', '2星', '3星', '4星', '5星'],
+                datasets: [{
+                    label: '评论数量',
+                    data: [
+                        {% for stat in rating_stats %}
+                            {% if stat.rating == 1 %}{{ stat.count }}{% endif %}
+                        {% endfor %},
+                        {% for stat in rating_stats %}
+                            {% if stat.rating == 2 %}{{ stat.count }}{% endif %}
+                        {% endfor %},
+                        {% for stat in rating_stats %}
+                            {% if stat.rating == 3 %}{{ stat.count }}{% endif %}
+                        {% endfor %},
+                        {% for stat in rating_stats %}
+                            {% if stat.rating == 4 %}{{ stat.count }}{% endif %}
+                        {% endfor %},
+                        {% for stat in rating_stats %}
+                            {% if stat.rating == 5 %}{{ stat.count }}{% endif %}
+                        {% endfor %}
+                    ],
+                    backgroundColor: '#007bff',
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+    
+    // 评论趋势图表
+    const trendCtx = document.getElementById('trendChart');
+    if (trendCtx) {
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: [
+                    {% for trend in trend_data %}
+                        "{{ trend.date|date:'m/d' }}"
+                        {% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                datasets: [{
+                    label: '评论趋势',
+                    data: [
+                        {% for trend in trend_data %}
+                            {{ trend.review_count }}
+                            {% if not forloop.last %},{% endif %}
+                        {% endfor %}
+                    ],
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+}
+
+function refreshDashboardData() {
+    fetch('/api/dashboard/stats/')
+        .then(response => response.json())
+        .then(data => {
+            // 更新统计卡片
+            updateStatCards(data);
+            
+            // 重新初始化图表
+            initializeCharts();
+        })
+        .catch(error => {
+            console.error('刷新数据失败:', error);
+        });
+}
+
+function updateStatCards(data) {
+    // 这里可以添加更新统计卡片的逻辑
+    console.log('更新统计数据:', data);
+}
+</script>
+{% endblock %}
