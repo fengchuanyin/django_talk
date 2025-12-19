@@ -21,6 +21,8 @@ from firstapp import views, test_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index, name='index'),
+    path('consumer/', views.consumer, name='consumer'),
+    path('merchant/', views.merchant, name='merchant'),
     path('test/', test_views.test_view, name='test'),
     path('reviews/', include('review_insights.urls')),
 ]

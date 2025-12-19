@@ -6,8 +6,11 @@ from django.db.models import Avg, Count, Q
 from django.utils import timezone
 from datetime import datetime, timedelta
 import json
+import time
+from django.http import JsonResponse
 
 from .models import Product, Review, ProductInsight, ReviewTrend
+from django.views.decorators.csrf import csrf_exempt
 
 def dashboard(request):
     """仪表板视图 - 显示演示页面"""
@@ -378,6 +381,7 @@ def api_dashboard_stats(request):
     })
 
 @require_http_methods(["POST"])
+@csrf_exempt
 def api_reviews_import(request):
     try:
         payload = json.loads(request.body.decode('utf-8'))
@@ -518,3 +522,143 @@ def insight_report_ui(request, product_id):
         'hours_ago': hours_ago,
     }
     return render(request, 'review_insights/insight_report.html', context)
+
+def _client_ip(request):
+    x = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x:
+        return x.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR') or ''
+
+_rate_bucket = {}
+_cache = {}
+
+def _rate_limited(key, limit=5, window=10):
+    now = time.time()
+    bucket = _rate_bucket.get(key) or []
+    bucket = [t for t in bucket if now - t < window]
+    if len(bucket) >= limit:
+        _rate_bucket[key] = bucket
+        return True
+    bucket.append(now)
+    _rate_bucket[key] = bucket
+    return False
+
+def _cache_get(key, ttl=30):
+    now = time.time()
+    val = _cache.get(key)
+    if not val:
+        return None
+    ts, data = val
+    if now - ts > ttl:
+        return None
+    return data
+
+def _cache_set(key, data):
+    _cache[key] = (time.time(), data)
+
+@require_http_methods(["GET"])
+def api_products_search(request):
+    q = (request.GET.get('search') or '').strip()
+    strict = (request.GET.get('strict') or 'false').lower() in ['true', '1', 'yes']
+    ip = _client_ip(request)
+    rk = f'products:{ip}'
+    if _rate_limited(rk, limit=10, window=10):
+        return JsonResponse({'error': 'too_many_requests'}, status=429)
+    ck = f'products:{q}:{1 if strict else 0}'
+    cached = _cache_get(ck, ttl=30)
+    if cached is not None:
+        return JsonResponse({'items': cached})
+    if not q:
+        _cache_set(ck, [])
+        return JsonResponse({'items': []})
+    if strict:
+        qs = Product.objects.filter(name__iexact=q)[:20]
+    else:
+        qs = Product.objects.filter(Q(name__icontains=q) | Q(description__icontains=q))[:20]
+    items = []
+    for p in qs:
+        insight, _ = ProductInsight.objects.get_or_create(product=p)
+        total = max(insight.total_reviews, 0)
+        name = p.name or ''
+        score = 0
+        if name.lower() == q.lower():
+            score = 3
+        elif name.lower().startswith(q.lower()):
+            score = 2
+        elif q.lower() in name.lower():
+            score = 1
+        items.append({'id': p.id, 'name': name, 'reviews': total, 'rank': score})
+    items.sort(key=lambda x: (-(x['rank']), -x['reviews'], x['name']))
+    items = [{'id': it['id'], 'name': it['name'], 'reviews': it['reviews']} for it in items]
+    _cache_set(ck, items)
+    return JsonResponse({'items': items})
+
+@require_http_methods(["GET"])
+def api_product_insight(request, product_id):
+    ip = _client_ip(request)
+    rk = f'insight:{ip}:{product_id}'
+    if _rate_limited(rk, limit=20, window=10):
+        return JsonResponse({'error': 'too_many_requests'}, status=429)
+    ck = f'insight:{product_id}'
+    cached = _cache_get(ck, ttl=30)
+    if cached is not None:
+        return JsonResponse(cached)
+    try:
+        product = Product.objects.get(id=product_id)
+    except Product.DoesNotExist:
+        return JsonResponse({'error': 'not_found'}, status=404)
+    insight, _ = ProductInsight.objects.get_or_create(product=product)
+    insight.update_insights()
+    total = max(insight.total_reviews, 1)
+    pos = int(insight.sentiment_distribution.get('positive', 0) or 0)
+    neg = int(insight.sentiment_distribution.get('negative', 0) or 0)
+    neu = int(insight.sentiment_distribution.get('neutral', 0) or 0)
+    pos_ratio = pos / total
+    score100 = int(round((insight.avg_rating / 5.0) * 60 + pos_ratio * 40))
+    score10 = round(score100 / 10.0, 1)
+    stars = int(round(insight.avg_rating))
+    from .nlp import extract_product_clusters, pros_cons_from_clusters
+    clusters = extract_product_clusters(product.reviews.all())
+    pros, cons = pros_cons_from_clusters(clusters, top_n=3)
+    keywords = []
+    for c in clusters:
+        label = c.get('label') or ''
+        s = c.get('positive', 0) + c.get('neutral', 0) + c.get('negative', 0)
+        if label:
+            keywords.append({'text': label, 'weight': s})
+    keywords = sorted(keywords, key=lambda x: x['weight'], reverse=True)[:12]
+    sentiment_counts = {
+        'positive': pos,
+        'neutral': neu,
+        'negative': neg,
+    }
+    recent_reviews = []
+    for r in Review.objects.filter(product=product).order_by('-created_at')[:5]:
+        recent_reviews.append({
+            'id': r.id,
+            'author': r.author,
+            'rating': r.rating,
+            'sentiment': r.sentiment,
+            'content': r.content[:120],
+            'created_at': r.created_at.strftime('%Y-%m-%d %H:%M')
+        })
+    sentiment_pct = {
+        'positive': int(round(pos / total * 100)),
+        'neutral': int(round(neu / total * 100)),
+        'negative': int(round(neg / total * 100)),
+    }
+    payload = {
+        'product': {'id': product.id, 'name': product.name},
+        'score10': score10,
+        'stars': stars,
+        'avg_rating': float(insight.avg_rating or 0.0),
+        'review_count': total,
+        'sentiment_counts': sentiment_counts,
+        'sentiment_pct': sentiment_pct,
+        'pros': pros,
+        'cons': cons,
+        'keywords': keywords,
+        'recent_reviews': recent_reviews,
+    }
+    _cache_set(ck, payload)
+    return JsonResponse(payload)

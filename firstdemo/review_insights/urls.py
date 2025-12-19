@@ -16,4 +16,6 @@ urlpatterns = [
     path('api/reviews/<int:review_id>/', views.api_review_detail, name='api_review_detail'),
     path('api/dashboard/stats/', views.api_dashboard_stats, name='api_dashboard_stats'),
     path('api/reviews/import/', views.api_reviews_import, name='api_reviews_import'),
+    path('api/products/', views.api_products_search, name='api_products_search'),
+    path('api/product/<int:product_id>/insight/', views.api_product_insight, name='api_product_insight'),
 ]
