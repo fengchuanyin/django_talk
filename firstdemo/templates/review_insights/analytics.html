@@ -5,8 +5,20 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-12">
+    <div class="col-md-8">
         <h1 class="h3 mb-4 text-gray-800">数据分析</h1>
+    </div>
+    <div class="col-md-4">
+        <form method="get" class="d-flex justify-content-end">
+            <select name="product" class="form-select" onchange="this.form.submit()">
+                <option value="">-- 所有产品 --</option>
+                {% for p in products %}
+                <option value="{{ p.id }}" {% if selected_product_id == p.id %}selected{% endif %}>
+                    {{ p.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
     </div>
 </div>
 
@@ -17,14 +29,14 @@
             <h5 class="chart-title">
                 <i class="fas fa-award me-2"></i>产品口碑评分指南
             </h5>
-            <div class="row g-3">
+            <div class="d-flex flex-nowrap overflow-auto pb-3" style="gap: 1rem;">
                 {% for guide in reputation_guides %}
-                <div class="col-lg-4 col-md-6">
+                <div class="flex-shrink-0" style="width: 350px;">
                     <div class="card dashboard-card h-100">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <strong>{{ guide.product.name }}</strong>
-                                <span class="badge bg-dark">{{ guide.tier }}</span>
+                                <strong class="text-truncate" title="{{ guide.product.name }}">{{ guide.product.name }}</strong>
+                                <span class="badge bg-dark flex-shrink-0 ms-2">{{ guide.tier }}</span>
                             </div>
                             <div class="mb-3">
                                 <div class="stat-number">{{ guide.score }}</div>
@@ -42,7 +54,7 @@
                                     <h6 class="text-success mb-2">优点</h6>
                                     {% if guide.pros %}
                                         {% for p in guide.pros %}
-                                            <span class="badge bg-light text-dark me-1 mb-1">{{ p }}</span>
+                                            <span class="badge bg-light text-dark d-block mb-1 text-truncate" title="{{ p }}">{{ p }}</span>
                                         {% endfor %}
                                     {% else %}
                                         <span class="text-muted">暂无明显优点</span>
@@ -52,19 +64,19 @@
                                     <h6 class="text-danger mb-2">缺点</h6>
                                     {% if guide.cons %}
                                         {% for c in guide.cons %}
-                                            <span class="badge bg-light text-dark me-1 mb-1">{{ c }}</span>
+                                            <span class="badge bg-light text-dark d-block mb-1 text-truncate" title="{{ c }}">{{ c }}</span>
                                         {% endfor %}
                                     {% else %}
                                         <span class="text-muted">暂无明显缺点</span>
                                     {% endif %}
                                 </div>
                             </div>
-                            <div class="mt-3">
-                                <a href="{% url 'review_insights:reviews' %}?product={{ guide.product.id }}" class="btn btn-outline-primary btn-sm">
-                                    查看该产品的评论
+                            <div class="mt-3 d-flex justify-content-between">
+                                <a href="{% url 'review_insights:reviews' %}?product={{ guide.product.id }}" class="btn btn-outline-primary btn-sm flex-fill me-1">
+                                    查看评论
                                 </a>
-                                <a href="{% url 'review_insights:product_report' guide.product.id %}" class="btn btn-primary btn-sm ms-2">
-                                    下载口碑报告
+                                <a href="{% url 'review_insights:product_report' guide.product.id %}" class="btn btn-primary btn-sm flex-fill ms-1">
+                                    下载报告
                                 </a>
                             </div>
                         </div>
@@ -164,72 +176,68 @@
     </div>
 </div>
 
-<!-- 产品洞察表格 -->
+<!-- 产品洞察详情 -->
 <div class="row mt-4">
     <div class="col-12">
         <div class="chart-container">
             <h5 class="chart-title">
                 <i class="fas fa-table me-2"></i>产品洞察详情
             </h5>
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>产品名称</th>
-                            <th>总评论数</th>
-                            <th>平均评分</th>
-                            <th>正面评论</th>
-                            <th>负面评论</th>
-                            <th>中性评论</th>
-                            <th>常见话题</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for insight in product_insights %}
-                        <tr>
-                            <td><strong>{{ insight.product.name }}</strong></td>
-                            <td>{{ insight.total_reviews }}</td>
-                            <td>
+            <div class="d-flex flex-nowrap overflow-auto pb-3" style="gap: 1rem;">
+                {% for insight in product_insights %}
+                <div class="flex-shrink-0" style="width: 320px;">
+                    <div class="card dashboard-card h-100 border">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <strong class="text-truncate" title="{{ insight.product.name }}">{{ insight.product.name }}</strong>
                                 <span class="badge bg-primary">{{ insight.avg_rating|floatformat:1 }}/5</span>
-                            </td>
-                            <td>
-                                <span class="badge bg-success">
-                                    {{ insight.sentiment_distribution.positive|default:0 }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge bg-danger">
-                                    {{ insight.sentiment_distribution.negative|default:0 }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge bg-secondary">
-                                    {{ insight.sentiment_distribution.neutral|default:0 }}
-                                </span>
-                            </td>
-                            <td>
-                                {% for topic in insight.common_topics|slice:":3" %}
-                                <span class="badge bg-light text-dark me-1">{{ topic }}</span>
-                                {% endfor %}
-                            </td>
-                            <td>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between text-center mb-3">
+                                <div>
+                                    <div class="small text-muted">总评论</div>
+                                    <div class="fw-bold">{{ insight.total_reviews }}</div>
+                                </div>
+                                <div>
+                                    <div class="small text-muted">正面</div>
+                                    <div class="fw-bold text-success">{{ insight.sentiment_distribution.positive|default:0 }}</div>
+                                </div>
+                                <div>
+                                    <div class="small text-muted">负面</div>
+                                    <div class="fw-bold text-danger">{{ insight.sentiment_distribution.negative|default:0 }}</div>
+                                </div>
+                                <div>
+                                    <div class="small text-muted">中性</div>
+                                    <div class="fw-bold text-secondary">{{ insight.sentiment_distribution.neutral|default:0 }}</div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6 class="small text-muted mb-2">常见话题</h6>
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% for topic in insight.common_topics|slice:":5" %}
+                                    <span class="badge bg-light text-dark">{{ topic }}</span>
+                                    {% empty %}
+                                    <span class="text-muted small">暂无话题</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="mt-auto">
                                 <a href="{% url 'review_insights:reviews' %}?product={{ insight.product.id }}" 
-                                   class="btn btn-sm btn-outline-primary">
+                                   class="btn btn-sm btn-outline-primary w-100">
                                     <i class="fas fa-eye me-1"></i>查看评论
                                 </a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="8" class="text-center text-muted">
-                                <i class="fas fa-inbox fa-2x mb-2"></i>
-                                <p>暂无产品洞察数据</p>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-4 text-muted">
+                    <i class="fas fa-inbox fa-2x mb-2"></i>
+                    <p>暂无产品洞察数据</p>
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>

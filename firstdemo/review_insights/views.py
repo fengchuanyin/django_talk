@@ -78,14 +78,30 @@ def analytics(request):
     # 获取产品列表
     products = Product.objects.all()
     
-    # 获取总体统计
-    total_reviews = Review.objects.count()
-    sentiment_distribution = Review.objects.values('sentiment').annotate(
+    # 获取当前选中的产品ID
+    selected_product_id = request.GET.get('product')
+    
+    # 基础查询集
+    reviews_queryset = Review.objects.all()
+    
+    # 如果选择了特定产品，进行筛选
+    selected_product = None
+    if selected_product_id:
+        try:
+            selected_product = Product.objects.get(id=selected_product_id)
+            reviews_queryset = reviews_queryset.filter(product_id=selected_product_id)
+        except Product.DoesNotExist:
+            pass
+            
+    # 获取总体统计（基于筛选后的结果）
+    total_reviews = reviews_queryset.count()
+    sentiment_distribution = reviews_queryset.values('sentiment').annotate(
         count=Count('sentiment')
     )
 
     from .nlp import build_global_clusters
-    global_clusters = build_global_clusters(Review.objects.all(), n_clusters=8, top_tokens=3, evidence_per_cluster=2)
+    # 使用筛选后的评论集进行聚类分析
+    global_clusters = build_global_clusters(reviews_queryset, n_clusters=8, top_tokens=3, evidence_per_cluster=2)
     topic_labels = []
     topic_pos = []
     topic_neg = []
@@ -122,6 +138,8 @@ def analytics(request):
     
     # 获取产品洞察数据，如果不存在则创建空的
     product_insights = []
+    
+    # 始终显示所有产品的洞察，以便进行对比
     for product in products:
         insight, created = ProductInsight.objects.get_or_create(
             product=product,
@@ -177,10 +195,15 @@ def analytics(request):
     
     trends = ReviewTrend.objects.filter(
         date__range=[start_date, end_date]
-    ).select_related('product').order_by('-date')
+    )
+    if selected_product:
+        trends = trends.filter(product=selected_product)
+        
+    trends = trends.select_related('product').order_by('-date')
     
     context = {
         'products': products,
+        'selected_product_id': int(selected_product_id) if selected_product_id else None,
         'total_reviews': total_reviews,
         'sentiment_distribution': list(sentiment_distribution),
         'product_insights': product_insights,
